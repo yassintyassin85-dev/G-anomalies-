@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Gestion des compteurs</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- SheetJS inclus localement en local pour fonctionnement hors-ligne garanti -->
+  <script src="xlsx.full.min.js"></script>
+</head>
+<body>
+  <div id="app" class="app-container">
+
+    <!-- En-tête de l'application -->
+    <header class="app-header">
+      <div class="header-content">
+        <div class="header-logo">
+          <svg viewBox="0 0 24 24" class="logo-icon" aria-hidden="true">
+            <path fill="currentColor" d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8zm0 18c-3.31 0-6-2.63-6-6.2 0-2.38 1.94-5.4 6-9.17 4.06 3.77 6 6.79 6 9.17 0 3.57-2.69 6.2-6 6.2zm-1-9h2v4h-2zm0 6h2v2h-2z"/>
+          </svg>
+        </div>
+        <div class="header-text">
+          <h1 class="app-title">Gestion des compteurs</h1>
+          <p class="app-subtitle">Relevé et gestion terrain des compteurs d’eau</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- VUE 1 : PAGE D'ACCUEIL -->
+    <main id="view-home" class="view-section active">
+      
+      <!-- Section Saisie Agent & Bouton d'ajout "+" -->
+      <section class="card agent-card">
+        <label for="agent-input" class="field-label">Nom de l’agent <span class="required-badge">* obligatoire</span></label>
+        <div class="agent-input-group">
+          <div class="input-with-icon">
+            <svg viewBox="0 0 24 24" class="field-icon" aria-hidden="true">
+              <path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+            <input 
+              type="text" 
+              id="agent-input" 
+              class="form-control text-input" 
+              placeholder="Ex. Dupont Jean" 
+              autocomplete="name"
+              maxlength="60"
+            >
+          </div>
+          <button 
+            type="button" 
+            id="btn-add-meter" 
+            class="btn-square-add" 
+            title="Ajouter un compteur"
+            aria-label="Ajouter un compteur"
+          >
+            <span class="plus-icon">+</span>
+          </button>
+        </div>
+        <p id="agent-error-msg" class="inline-error hidden">Veuillez renseigner le nom de l’agent avant d’ajouter un compteur.</p>
+      </section>
+
+      <!-- Section Statistiques & Indicateurs clés -->
+      <section class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon-wrapper meter-stat-icon">
+            <svg viewBox="0 0 24 24" class="stat-svg" aria-hidden="true">
+              <path fill="currentColor" d="M12 4a8 8 0 0 0-8 8c0 3.31 2.01 6.16 4.9 7.37L10 17.5a6.002 6.002 0 0 1-4-5.5 6 6 0 1 1 12 0c0 2.45-1.48 4.56-3.6 5.5l1.1 1.87A7.994 7.994 0 0 0 20 12a8 8 0 0 0-8-8zm-1 5h2v4.59l2.71 2.7-1.42 1.42L11 14.41V9z"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value" id="stat-total-meters">0</span>
+            <span class="stat-label">Total compteurs</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon-wrapper agent-stat-icon">
+            <svg viewBox="0 0 24 24" class="stat-svg" aria-hidden="true">
+              <path fill="currentColor" d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value" id="stat-total-agents">0</span>
+            <span class="stat-label">Agents actifs</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section Actions Globales (Export Excel, Sauvegarde, Restauration) -->
+      <section class="actions-card">
+        <div class="actions-grid">
+          <button type="button" id="btn-export-excel" class="btn btn-action btn-excel">
+            <svg viewBox="0 0 24 24" class="btn-icon" aria-hidden="true">
+              <path fill="currentColor" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+            </svg>
+            <span>Exporter vers Excel</span>
+          </button>
+
+          <button type="button" id="btn-backup-json" class="btn btn-action btn-backup">
+            <svg viewBox="0 0 24 24" class="btn-icon" aria-hidden="true">
+              <path fill="currentColor" d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/>
+            </svg>
+            <span>Sauvegarder les données</span>
+          </button>
+
+          <button type="button" id="btn-trigger-restore" class="btn btn-action btn-restore">
+            <svg viewBox="0 0 24 24" class="btn-icon" aria-hidden="true">
+              <path fill="currentColor" d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+            </svg>
+            <span>Importer une sauvegarde</span>
+          </button>
+        </div>
+        <input type="file" id="file-import-input" accept=".json,application/json" class="hidden-file-input" aria-hidden="true">
+      </section>
+
+      <!-- Barre de recherche rapide -->
+      <section class="search-bar-container">
+        <div class="input-with-icon">
+          <svg viewBox="0 0 24 24" class="field-icon" aria-hidden="true">
+            <path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          </svg>
+          <input 
+            type="search" 
+            id="search-input" 
+            class="form-control search-input" 
+            placeholder="Rechercher par compteur, abonné, unité, observation..."
+            aria-label="Rechercher des compteurs"
+          >
+          <button type="button" id="btn-clear-search" class="clear-search-btn hidden" aria-label="Effacer la recherche">✕</button>
+        </div>
+      </section>
+
+      <!-- Liste des compteurs -->
+      <section class="meters-section">
+        <div class="section-title-row">
+          <h2 class="section-heading">Liste des compteurs enregistrés</h2>
+          <span class="count-badge" id="list-count-badge">0 compteur(s)</span>
+        </div>
+
+        <div id="meters-list" class="meters-grid">
+          <!-- Les cartes de compteurs seront injectées dynamiquement en JS -->
+        </div>
+
+        <!-- État vide si aucun compteur -->
+        <div id="empty-state" class="empty-state card">
+          <div class="empty-icon-wrapper">
+            <svg viewBox="0 0 24 24" class="empty-svg" aria-hidden="true">
+              <path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h10v2H7zm0-3h10v2H7zm0 6h7v2H7z"/>
+            </svg>
+          </div>
+          <h3 class="empty-title">Aucun compteur enregistré</h3>
+          <p class="empty-desc">Renseignez le nom de l’agent ci-dessus et cliquez sur le bouton carré « + » pour enregistrer votre premier compteur d’eau.</p>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- VUE 2 : FORMULAIRE D'AJOUT / MODIFICATION D'UN COMPTEUR -->
+    <section id="view-form" class="view-section hidden">
+      <div class="form-wrapper card">
+        <div class="form-header">
+          <div class="form-title-group">
+            <span class="form-badge" id="form-mode-badge">Nouveau</span>
+            <h2 id="form-title" class="form-heading">Ajouter un compteur</h2>
+          </div>
+          <p class="form-subtitle">Saisissez les informations techniques du compteur d'eau</p>
+        </div>
+
+        <form id="meter-form" novalidate>
+          <input type="hidden" id="edit-meter-id" value="">
+
+          <!-- Agent (rappel informatif) -->
+          <div class="form-group">
+            <label class="field-label">Agent responsable</label>
+            <div class="read-only-pill" id="form-agent-display">Non défini</div>
+          </div>
+
+          <!-- 1. Numéro du compteur (obligatoire) -->
+          <div class="form-group">
+            <label for="meter-number-input" class="field-label">
+              Numéro du compteur <span class="required-star">*</span>
+            </label>
+            <input 
+              type="text" 
+              id="meter-number-input" 
+              class="form-control" 
+              placeholder="Ex. CPT-89410" 
+              required
+              maxlength="40"
+            >
+            <small class="field-help" id="meter-number-error">Ce champ est obligatoire.</small>
+          </div>
+
+          <!-- 2. Unité -->
+          <div class="form-group">
+            <label for="unit-input" class="field-label">Unité</label>
+            <input 
+              type="text" 
+              id="unit-input" 
+              class="form-control" 
+              placeholder="Ex. Secteur Nord - Tour A / m³"
+              maxlength="50"
+            >
+          </div>
+
+          <!-- 3. Observation (liste déroulante stricte) -->
+          <div class="form-group">
+            <label for="observation-select" class="field-label">Observation</label>
+            <div class="select-wrapper">
+              <select id="observation-select" class="form-control select-control">
+                <option value="Compteur mal posé">Compteur mal posé</option>
+                <option value="Compteur mal classé">Compteur mal classé</option>
+                <option value="Compteur détérioré">Compteur détérioré</option>
+                <option value="Compteur intérieur">Compteur intérieur</option>
+                <option value="Autre" selected>Autre</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 4. Ancien abonné -->
+          <div class="form-group">
+            <label for="previous-subscriber-input" class="field-label">Ancien abonné</label>
+            <input 
+              type="text" 
+              id="previous-subscriber-input" 
+              class="form-control" 
+              placeholder="Nom ou référence de l'ancien abonné"
+              maxlength="80"
+            >
+          </div>
+
+          <!-- 5. Nouvel abonné -->
+          <div class="form-group">
+            <label for="new-subscriber-input" class="field-label">Nouvel abonné</label>
+            <input 
+              type="text" 
+              id="new-subscriber-input" 
+              class="form-control" 
+              placeholder="Nom ou référence du nouvel abonné"
+              maxlength="80"
+            >
+          </div>
+
+          <!-- Boutons de soumission -->
+          <div class="form-actions">
+            <button type="submit" id="btn-save-meter" class="btn btn-primary btn-submit">
+              <svg viewBox="0 0 24 24" class="btn-icon" aria-hidden="true">
+                <path fill="currentColor" d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+              </svg>
+              <span>Enregistrer</span>
+            </button>
+
+            <button type="button" id="btn-cancel-meter" class="btn btn-secondary btn-cancel">
+              <svg viewBox="0 0 24 24" class="btn-icon" aria-hidden="true">
+                <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+              </svg>
+              <span>Annuler et retourner</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- MODAL DE CONFIRMATION (Suppression / Restauration) -->
+    <div id="confirm-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <div class="modal-icon-badge" id="modal-icon-container">
+            <svg viewBox="0 0 24 24" class="modal-icon" aria-hidden="true">
+              <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+          </div>
+          <h3 id="modal-title" class="modal-title">Confirmation</h3>
+        </div>
+        <div class="modal-body">
+          <p id="modal-message" class="modal-message">Êtes-vous sûr de vouloir effectuer cette action ?</p>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="btn-modal-cancel" class="btn btn-secondary">Annuler</button>
+          <button type="button" id="btn-modal-confirm" class="btn btn-danger">Confirmer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENEUR DES MESSAGES TOAST -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

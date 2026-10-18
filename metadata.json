@@ -1,0 +1,6 @@
+{
+  "name": "Gestion des compteurs",
+  "description": "Application professionnelle de gestion des compteurs d’eau avec saisie terrain, export Excel .xlsx et sauvegarde locale.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
